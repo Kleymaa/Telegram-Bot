@@ -35,4 +35,42 @@ bot.polling()
 
 
 
+from g4f.client import Client as G4FClient
+from g4f import models
+import requests
+from bs4 import BeautifulSoup
+from textwrap import wrap
 
+
+
+url = 'https://www.counter-strike.net/' # @param {type: "string"}
+
+r = requests.get(url)
+text = BeautifulSoup(r.text).text
+
+prompt = 'Сделай краткое содержание по этой странице. Выбери только самое важное, отвечай на том же языке, что и страница:' # @param {type: "string"}
+prompt += text
+
+model = 'gpt-4o' # @param ['gpt-3.5-turbo', 'gpt-4o', 'gpt-4o-mini', 'gpt-4', 'gpt-4-turbo'] {allow-input: true}
+
+def get_answer(text):
+  i = 0
+  while i < 10:
+    client = G4FClient()
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": text}],
+    )
+    res = response.choices[0].message.content
+    i += 1
+
+    if len(res) > 0 and 'Model' not in res and 'error' not in res and 'chat' not in res:
+      return res
+      break
+
+if r.status_code == 200:
+  answer = get_answer(prompt)
+  for i in wrap(answer, 65):
+    print(i)
+else:
+  print('Сайт не поддерживается')
